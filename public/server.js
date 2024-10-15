@@ -12,7 +12,7 @@ const rekognition = new AWS.Rekognition();
 
 // Set up Google Cloud Vision API
 const language = google.language("v1beta2");
-const languageApiKey = "API KEY";
+const languageApiKey = "AIzaSyC79hEtkOQjytMaL4zkNZBbrNlG5Ndjk0c";
 const languageApiEndpoint = "https://language.googleapis.com/v1beta2/documents:analyze?key=" + languageApiKey;
 
 

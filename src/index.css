@@ -1,13 +1,72 @@
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background-color: #9f9f9f;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+#root {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.analyzer {
+  margin-bottom: 20px;
+}
+
+.analyzer input[type="file"] {
+  margin-bottom: 10px;
+}
+
+.analyzer select {
+  margin-bottom: 10px;
+}
+
+.analyzer button {
+  background-color: #4caf50;
+  color:#fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.analyzer button:hover {
+  background-color: #3e8341;
+}
+
+.result-display {
+  margin-top: 20px;
+}
+
+.result-display h2 {
+  margin-top: 0;
+}
+
+.result-display pre {
+  background-color: #f0f0f0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  #root {
+    margin: 10px auto;
+  }
+}
+
+@media (max-width: 480px) {
+  #root {
+    margin: 5px auto;
+  }
+  .analyzer button {
+    padding: 5px 10px;
+  }
 }
