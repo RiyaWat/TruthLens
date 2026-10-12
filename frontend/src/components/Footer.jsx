@@ -25,7 +25,7 @@ export default function Footer() {
             Privacy
           </Link>
           <p className="tl-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
-            © {new Date().getFullYear()} · forensic v1
+            © {new Date().getFullYear()} · AI-assisted, not proof
           </p>
         </div>
       </div>

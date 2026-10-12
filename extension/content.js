@@ -31,7 +31,7 @@
             <button class="tl-x" aria-label="close">×</button>
           </div>
           <div class="tl-laser-wrap"><div class="tl-laser"></div></div>
-          <p class="tl-muted">Examining forensic markers…</p>
+          <p class="tl-muted">Asking the AI model…</p>
         </div>`;
     } else if (status === "error") {
       r.innerHTML = `

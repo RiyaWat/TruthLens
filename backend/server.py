@@ -1,6 +1,6 @@
 """TruthLens FastAPI backend — deepfake & AI-content detection."""
 from fastapi import FastAPI, APIRouter, HTTPException, Body, Response, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -31,10 +31,12 @@ load_dotenv(ROOT_DIR / '.env')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_TEXT_MODEL = os.environ.get('GEMINI_TEXT_MODEL', 'gemini-2.5-flash')
 GEMINI_VISION_MODEL = os.environ.get('GEMINI_VISION_MODEL', 'gemini-2.5-flash')
-MONGO_URL = os.environ['MONGO_URL']
-DB_NAME = os.environ['DB_NAME']
+MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+DB_NAME = os.environ.get('DB_NAME', 'truthlens')
 
-client = AsyncIOMotorClient(MONGO_URL)
+# Short server-selection timeout so a bad/missing DB shows up as a clear error
+# (and in /api/health) instead of hanging requests for 30s.
+client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=8000)
 db = client[DB_NAME]
 
 app = FastAPI(title="TruthLens API")
@@ -200,23 +202,67 @@ def _normalize(parsed: dict, allow_deepfake: bool = True) -> dict:
     }
 
 
+AI_UNAVAILABLE_MSG = (
+    "Analysis is temporarily unavailable (the AI service isn't reachable right now). "
+    "Please try again in a few minutes."
+)
+AI_BUSY_MSG = (
+    "Analysis is temporarily unavailable: the free AI quota is used up for the moment. "
+    "Please try again in a minute or two."
+)
+
+
+class AIUnavailable(Exception):
+    """The AI provider is not configured, down, or quota-limited."""
+
+    def __init__(self, message: str = AI_UNAVAILABLE_MSG, cause: str = ""):
+        super().__init__(message)
+        self.message = message
+        self.cause = cause
+
+
+def _ai_http_error(e: Exception) -> HTTPException:
+    """Turn any analysis failure into a friendly 503 the UI can show as-is."""
+    if isinstance(e, HTTPException):
+        return e
+    if isinstance(e, AIUnavailable):
+        log.warning(f"AI unavailable: {e.cause or e.message}")
+        return HTTPException(503, e.message)
+    log.exception("analysis failed")
+    return HTTPException(503, AI_UNAVAILABLE_MSG)
+
+
+def _require_ai() -> None:
+    if not GEMINI_API_KEY:
+        raise HTTPException(503, AI_UNAVAILABLE_MSG)
+
+
 async def _gemini(model: str, system: str, parts: list) -> str:
     """Call the Gemini generateContent REST endpoint and return the reply text."""
     if not GEMINI_API_KEY:
-        raise RuntimeError("GEMINI_API_KEY is not set")
+        raise AIUnavailable(cause="GEMINI_API_KEY is not set")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
     }
-    async with httpx.AsyncClient(timeout=90) as http:
-        r = await http.post(url, params={"key": GEMINI_API_KEY}, json=body)
-        r.raise_for_status()
+    try:
+        async with httpx.AsyncClient(timeout=90) as http:
+            r = await http.post(url, params={"key": GEMINI_API_KEY}, json=body)
+    except httpx.HTTPError as e:
+        raise AIUnavailable(cause=f"network error: {type(e).__name__}")
+    if r.status_code == 429:
+        raise AIUnavailable(AI_BUSY_MSG, cause="Gemini 429 (quota/rate limit)")
+    if r.status_code >= 400:
+        raise AIUnavailable(cause=f"Gemini HTTP {r.status_code}: {r.text[:300]}")
+    try:
         data = r.json()
+    except ValueError:
+        raise AIUnavailable(cause="Gemini returned non-JSON")
     cands = data.get("candidates") or []
     if not cands:
-        raise RuntimeError(f"Gemini returned no candidates: {str(data)[:300]}")
+        raise AIUnavailable(cause=f"Gemini returned no candidates: {str(data)[:300]}")
     return "".join(p.get("text", "") for p in cands[0].get("content", {}).get("parts", []))
 
 
@@ -358,55 +404,38 @@ def _ensure_jpeg_b64(b64: str, max_side: int = 1024) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def _extract_video_frames(b64: str, n_frames: int = 4) -> List[str]:
+def _frame_to_jpeg_b64(frame, size: int = 1024) -> str:
+    pil = Image.fromarray(frame)
+    if pil.mode != "RGB":
+        pil = pil.convert("RGB")
+    pil.thumbnail((size, size))
+    buf = io.BytesIO()
+    pil.save(buf, format="JPEG", quality=80)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def _extract_video_frames(b64: str, n_frames: int = 4, max_scan: int = 240) -> List[str]:
+    """Sample up to n_frames evenly across the first `max_scan` decoded frames.
+
+    Frames are shrunk to small JPEGs as they are decoded so memory stays low
+    (the free hosting tier has 512 MB).
+    """
     raw = base64.b64decode(b64)
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
         f.write(raw)
         path = f.name
     try:
-        # Read all frames, sample evenly
-        frames_out: List[str] = []
-        meta = iio.immeta(path, plugin="pyav")
-        duration = float(meta.get("duration", 0)) or 0.0
-        if duration <= 0:
-            # fallback: read first n
-            it = iio.imiter(path, plugin="pyav")
-            for i, frame in enumerate(it):
-                if i >= n_frames:
-                    break
-                pil = Image.fromarray(frame)
-                if pil.mode != "RGB":
-                    pil = pil.convert("RGB")
-                pil.thumbnail((1024, 1024))
-                buf = io.BytesIO()
-                pil.save(buf, format="JPEG", quality=80)
-                frames_out.append(base64.b64encode(buf.getvalue()).decode())
-            return frames_out
-        timestamps = [duration * (i + 0.5) / n_frames for i in range(n_frames)]
-        for t in timestamps:
-            try:
-                frame = iio.imread(path, plugin="pyav", index=None, thumbnail=None)
-            except Exception:
-                continue
-        # Simpler: just iterate and pick evenly
-        all_frames = []
-        for frame in iio.imiter(path, plugin="pyav"):
-            all_frames.append(frame)
-            if len(all_frames) > 240:  # cap to 240 for memory
+        thumbs: List[str] = []
+        for i, frame in enumerate(iio.imiter(path, plugin="pyav")):
+            if i >= max_scan:
                 break
-        if not all_frames:
+            thumbs.append(_frame_to_jpeg_b64(frame, 768))
+        if not thumbs:
             return []
-        idxs = [int((i + 0.5) * len(all_frames) / n_frames) for i in range(n_frames)]
-        for idx in idxs:
-            idx = min(idx, len(all_frames) - 1)
-            pil = Image.fromarray(all_frames[idx])
-            if pil.mode != "RGB":
-                pil = pil.convert("RGB")
-            pil.thumbnail((1024, 1024))
-            buf = io.BytesIO()
-            pil.save(buf, format="JPEG", quality=80)
-            frames_out.append(base64.b64encode(buf.getvalue()).decode())
-        return frames_out
+        if len(thumbs) <= n_frames:
+            return thumbs
+        idxs = [int((i + 0.5) * len(thumbs) / n_frames) for i in range(n_frames)]
+        return [thumbs[min(i, len(thumbs) - 1)] for i in idxs]
     finally:
         try:
             os.unlink(path)
@@ -420,19 +449,31 @@ async def root():
     return {"app": "TruthLens", "status": "online", "version": "1.0.0"}
 
 
+@api.get("/health")
+async def health():
+    """Liveness + config check: is the DB reachable, is the AI key set?"""
+    db_ok = False
+    try:
+        await asyncio.wait_for(client.admin.command("ping"), timeout=8)
+        db_ok = True
+    except Exception as e:
+        log.warning(f"health: db ping failed: {type(e).__name__}")
+    return {"ok": True, "db": db_ok, "ai": "configured" if GEMINI_API_KEY else "missing"}
+
+
 @api.post("/analyze/text", response_model=ScanResult)
 async def analyze_text(req: TextRequest, request: Request = None):
     if not req.content or len(req.content.strip()) < 20:
         raise HTTPException(400, "Text must be at least 20 characters")
     if len(req.content) > 20000:
         req.content = req.content[:20000]
+    _require_ai()
     await check_and_consume(db, "text", req.session_id, request)
     pf = text_prefilter(req.content)
     try:
         parsed = await _llm_text(SYSTEM_TEXT, f"Analyze this text:\n\n{req.content}")
     except Exception as e:
-        log.exception("text analyze failed")
-        raise HTTPException(502, f"Analysis failed: {e}")
+        raise _ai_http_error(e)
     norm = _normalize(parsed, allow_deepfake=False)
     if not norm.get("language"):
         norm["language"] = _detect_language(req.content)
@@ -458,6 +499,7 @@ async def analyze_image(req: ImageRequest, request: Request = None):
         b64 = _ensure_jpeg_b64(req.image_base64)
     except Exception as e:
         raise HTTPException(400, f"Invalid image: {e}")
+    _require_ai()
     await check_and_consume(db, "image", req.session_id, request)
     pf = image_prefilter_b64(b64)
     if pf["short_circuit"]:
@@ -476,8 +518,7 @@ async def analyze_image(req: ImageRequest, request: Request = None):
     try:
         parsed = await _llm_image(SYSTEM_IMAGE, "Analyze this image for AI/deepfake markers.", [b64])
     except Exception as e:
-        log.exception("image analyze failed")
-        raise HTTPException(502, f"Analysis failed: {e}")
+        raise _ai_http_error(e)
     norm = _normalize(parsed, allow_deepfake=True)
     storage_path = await _store_image(req.session_id, b64)
     scan = ScanResult(
@@ -500,6 +541,7 @@ async def analyze_video(req: VideoRequest, request: Request = None):
             raise ValueError("No frames extracted")
     except Exception as e:
         raise HTTPException(400, f"Invalid video: {e}")
+    _require_ai()
     await check_and_consume(db, "video", req.session_id, request)
     try:
         parsed = await _llm_image(
@@ -508,8 +550,7 @@ async def analyze_video(req: VideoRequest, request: Request = None):
             frames,
         )
     except Exception as e:
-        log.exception("video analyze failed")
-        raise HTTPException(502, f"Analysis failed: {e}")
+        raise _ai_http_error(e)
     norm = _normalize(parsed, allow_deepfake=True)
     storage_path = await _store_video(req.session_id, req.video_base64, req.filename)
     scan = ScanResult(
@@ -527,6 +568,7 @@ async def analyze_video(req: VideoRequest, request: Request = None):
 async def analyze_url(req: UrlRequest, request: Request = None):
     if not req.url.startswith(("http://", "https://")):
         raise HTTPException(400, "URL must include http(s)://")
+    _require_ai()
     await check_and_consume(db, "url", req.session_id, request)
     try:
         async with httpx.AsyncClient(timeout=15, follow_redirects=True,
@@ -547,8 +589,7 @@ async def analyze_url(req: UrlRequest, request: Request = None):
             f"URL: {req.url}\nTITLE: {title}\n\nBODY:\n{text}",
         )
     except Exception as e:
-        log.exception("url analyze failed")
-        raise HTTPException(502, f"Analysis failed: {e}")
+        raise _ai_http_error(e)
     norm = _normalize(parsed, allow_deepfake=False)
     if not norm.get("language") or norm["language"].upper() in ("N/A", "UNKNOWN"):
         norm["language"] = _detect_language(text) or norm.get("language")
@@ -686,7 +727,7 @@ def _build_pdf(doc: dict) -> bytes:
     c.rect(0, H - 32, W, 32, fill=1, stroke=0)
     c.setFillColor(HexColor("#000000"))
     c.setFont("Helvetica-Bold", 11)
-    c.drawString(36, H - 22, "TRUTHLENS  ·  FORENSIC REPORT")
+    c.drawString(36, H - 22, "TRUTHLENS  ·  SCAN REPORT")
     c.setFont("Helvetica", 9)
     c.drawRightString(W - 36, H - 22, f"v1.0  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
 
@@ -794,7 +835,8 @@ def _build_pdf(doc: dict) -> bytes:
     # Footer
     c.setFillColor(muted)
     c.setFont("Helvetica", 8)
-    c.drawString(36, 24, "Generated by TruthLens · Models: GPT-5.2 + Gemini 3.1 Pro · truthlens forensic v1")
+    c.drawString(36, 36, "Generated by TruthLens using Google Gemini (a general AI model, not a trained deepfake detector).")
+    c.drawString(36, 24, "This is an AI-assisted estimate, not proof. Verify important content with other sources.")
 
     c.save()
     return buf.getvalue()
@@ -861,6 +903,8 @@ def _public_backend_url() -> str:
     # PUBLIC_BACKEND_URL (or REACT_APP_BACKEND_URL in frontend/.env) is the host the extension calls
     if os.environ.get("PUBLIC_BACKEND_URL"):
         return os.environ["PUBLIC_BACKEND_URL"].rstrip("/")
+    if os.environ.get("RENDER_EXTERNAL_URL"):  # set automatically on Render
+        return os.environ["RENDER_EXTERNAL_URL"].rstrip("/")
     env = Path(__file__).resolve().parent.parent / "frontend" / ".env"
     if env.exists():
         for line in env.read_text().splitlines():
@@ -1030,10 +1074,33 @@ async def auth_me():
 # Mount router
 app.include_router(api)
 
+
+
+@app.middleware("http")
+async def _catch_unhandled(request: Request, call_next):
+    # Return unexpected errors as JSON *inside* the CORS layer, so the browser
+    # sees a readable message instead of a blocked/opaque 500.
+    try:
+        return await call_next(request)
+    except Exception:
+        log.exception("unhandled error on %s", request.url.path)
+        return JSONResponse(status_code=500, content={"detail": "Something went wrong on the server. Please try again."})
+
+
+# CORS: explicit origins from CORS_ORIGINS (comma list, "*" = any) plus any
+# TruthLens deployment on Vercel (Vercel may add a suffix, e.g. truthlens-abc.vercel.app).
+_cors_origins = [o.strip().rstrip("/") for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+_cors_regex = os.environ.get(
+    "CORS_ORIGIN_REGEX",
+    r"https://truthlens[-a-z0-9]*\.vercel\.app|http://localhost(:\d+)?|http://127\.0\.0\.1(:\d+)?",
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=_cors_origins,
+    allow_origin_regex=_cors_regex,
+    # No cookies are used (the browser keeps an anonymous session id in
+    # localStorage), so credentials stay off; that also makes "*" valid.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

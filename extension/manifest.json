@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TruthLens — Deepfake & AI Detector",
   "version": "1.0.0",
-  "description": "Forensic counter-deepfake. Right-click any image or selected text on the web to scan it instantly.",
+  "description": "Right-click any image or selected text to get an AI-assisted estimate of whether it was AI-generated. A hint, not proof.",
   "permissions": ["contextMenus", "activeTab", "storage", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },

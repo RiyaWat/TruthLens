@@ -24,7 +24,7 @@ export default function ReportPage() {
     const og = ogUrl(scan.id);
     const url = window.location.href;
     const title = `TruthLens · ${scan.classification} ${scan.score}% · ${scan.type.toUpperCase()}`;
-    const desc = scan.summary || "Forensic deepfake & AI-content detection";
+    const desc = scan.summary || "AI-assisted deepfake & AI-content check";
 
     const setMeta = (sel, attr, val) => {
       let el = document.head.querySelector(sel);

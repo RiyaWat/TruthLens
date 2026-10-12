@@ -1,0 +1,23 @@
+# Render Blueprint: the TruthLens API on Render's free plan.
+# (You can also create the same service by hand: New -> Web Service, same settings.)
+services:
+  - type: web
+    name: truthlens-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: MONGO_URL          # MongoDB Atlas connection string (mongodb+srv://...)
+        sync: false
+      - key: DB_NAME
+        value: truthlens
+      - key: GEMINI_API_KEY     # free key from aistudio.google.com
+        sync: false
+      - key: CORS_ORIGINS       # your Vercel URL, e.g. https://truthlens.vercel.app
+        sync: false

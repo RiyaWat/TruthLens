@@ -31,7 +31,7 @@
 | Field | Value (copy-paste) |
 | --- | --- |
 | **Item name** | TruthLens — Deepfake & AI Detector |
-| **Summary (132 chars)** | `Forensic counter-deepfake. Right-click any image, text, or page to get an instant verdict — HUMAN / AI / DEEPFAKE / UNCERTAIN.` |
+| **Summary (132 chars)** | `Right-click any image, text, or page for an AI-assisted estimate: HUMAN / AI / DEEPFAKE / UNCERTAIN. A hint, not proof.` |
 | **Detailed description** | Paste the **"Detailed description"** section from `docs/store-listing.md` (already formatted). |
 | **Category** | Productivity (primary) · Tools (secondary) |
 | **Language** | English (United States) |

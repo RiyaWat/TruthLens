@@ -11,10 +11,10 @@
     "getExtension": "Get extension"
   },
   "hero": {
-    "badge": "Live · Forensic AI Detection",
+    "badge": "AI-assisted content check",
     "headline1": "See through",
     "headline2": "the deepfake.",
-    "subhead": "TruthLens is a forensic counter-deepfake browser tool. Real-time analysis of text, images, video and URLs — instant verdicts on what was made by humans, what was made by machines.",
+    "subhead": "TruthLens is a browser extension and dashboard that asks an AI model (Google Gemini) to look for signs that text, images, video or a webpage were machine-made. You get a quick estimate with the reasons behind it: a second opinion, not proof.",
     "cta_run": "Run a scan",
     "cta_install": "Install extension",
     "scroll": "Scroll"
@@ -23,12 +23,12 @@
     "scans_performed": "scans performed",
     "deepfakes_flagged": "deepfakes flagged",
     "ai_caught": "AI-content caught",
-    "uptime": "uptime"
+    "uptime": "analysis model"
   },
   "dashboard": {
     "section_label": "// LIVE ANALYSIS",
-    "title": "Run a forensic scan.",
-    "subtitle": "Paste text, drop an image or video, or analyze a URL. TruthLens returns a verdict in seconds.",
+    "title": "Run a scan.",
+    "subtitle": "Paste text, drop an image or video, or analyze a URL. TruthLens returns an AI-assisted estimate in seconds.",
     "tab_text": "Text",
     "tab_image": "Image",
     "tab_video": "Video",
@@ -53,18 +53,19 @@
     "chars": "chars"
   },
   "verdict": {
-    "scanning": "// FORENSIC ANALYSIS IN PROGRESS",
-    "scanning_sub": "Examining frequency artifacts, anatomical inconsistencies, linguistic patterns…",
-    "prob_ai": "probability AI",
-    "confidence": "confidence",
+    "scanning": "// ANALYSIS IN PROGRESS",
+    "scanning_sub": "Asking the AI model to look for signs of machine generation…",
+    "prob_ai": "estimated AI likelihood",
+    "confidence": "model confidence",
     "reasoning": "// reasoning",
-    "markers": "// forensic markers",
+    "markers": "// signals noticed",
     "open_report": "Open full report →",
     "human": "Likely Human",
-    "ai": "AI-Generated",
-    "deepfake": "Deepfake Detected",
+    "ai": "Likely AI-Generated",
+    "deepfake": "Possible Deepfake",
     "uncertain": "Uncertain",
-    "share": "Share"
+    "share": "Share",
+    "disclaimer": "AI-assisted estimate from Google Gemini, a general AI model, not a trained deepfake detector. Treat it as a hint, not proof."
   },
   "recent": {
     "title": "// recent scans",
@@ -72,7 +73,7 @@
   },
   "report": {
     "back": "back to dashboard",
-    "header": "// FORENSIC REPORT —",
+    "header": "// SCAN REPORT —",
     "preview": "// preview",
     "download_pdf": "Download PDF",
     "share_link": "Copy share link",
@@ -117,7 +118,7 @@
   },
   "history": {
     "label": "// SCAN HISTORY",
-    "title": "Your forensic record.",
+    "title": "Your scan history.",
     "subtitle": "Every scan run from this device. Anonymous and stored locally to a session id.",
     "filter_all": "All",
     "filter_text": "Text",
@@ -146,18 +147,18 @@
     "title_2": "sees through the lie.",
     "step1_title": "Capture",
     "step1_body": "Paste text, drop an image or video, or feed a URL. The browser extension lets you scan in-place on any webpage.",
-    "step2_title": "Multimodal Models",
-    "step2_body": "Routed to GPT-5.2 for linguistic forensics or Gemini 3 Pro for image/frame-level visual forensics.",
-    "step3_title": "Forensic markers",
-    "step3_body": "Anatomical errors, frequency artifacts, lighting inconsistencies, cadence patterns — graded by severity.",
+    "step2_title": "AI model",
+    "step2_body": "Sent to Google Gemini (gemini-2.5-flash) with a prompt asking it to look for the tell-tale signs below. It's a general AI model, not a purpose-trained detector.",
+    "step3_title": "Signals",
+    "step3_body": "Things like anatomical errors, odd lighting, repetitive phrasing, each tagged by severity so you can judge for yourself.",
     "step4_title": "Verdict",
-    "step4_body": "0–100 synthetic-probability with a clear classification: HUMAN, AI, DEEPFAKE, or UNCERTAIN."
+    "step4_body": "A 0–100 estimate with a label: HUMAN, AI, DEEPFAKE or UNCERTAIN. A starting point, not a final answer."
   },
   "extension": {
     "label": "// CHROME EXTENSION · v1.0",
     "title_1": "Inspect anything.",
     "title_2": "Right where you read.",
-    "subtitle": "Right-click any image or selected text on the web — TruthLens overlays a verdict instantly. Works on news sites, social platforms, anywhere.",
+    "subtitle": "Right-click any image or selected text on the web and TruthLens shows the AI's estimate right on the page. Works on news sites, social platforms, anywhere.",
     "download": "Download .zip",
     "manifest": "Manifest V3",
     "install_title": "# install instructions",
@@ -167,7 +168,7 @@
     "install_4": "4. click Load unpacked → select folder"
   },
   "footer": {
-    "tag": "counter-deepfake intelligence"
+    "tag": "AI-assisted content checks"
   },
   "login": {
     "label": "// ACCOUNT",

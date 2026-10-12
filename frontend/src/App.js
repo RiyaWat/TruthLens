@@ -11,12 +11,13 @@ import SettingsPage from "@/pages/SettingsPage";
 import LoginPage from "@/pages/LoginPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import { Toaster } from "sonner";
+import ServerWakeBanner from "@/components/ServerWakeBanner";
+import { sessionId, warmUp } from "@/lib/api";
 
 function App() {
   useEffect(() => {
-    if (!localStorage.getItem("tl_session")) {
-      localStorage.setItem("tl_session", crypto.randomUUID());
-    }
+    sessionId();
+    warmUp();
   }, []);
 
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/report/:id" element={<ReportPage />} />
         </Routes>
       </BrowserRouter>
+      <ServerWakeBanner />
       <Toaster position="bottom-right" theme="dark" />
     </div>
   );

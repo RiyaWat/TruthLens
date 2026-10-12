@@ -18,7 +18,7 @@ export default function StatsBar() {
     { k: t("stats.scans_performed"), v: stats.total_scans, c: "#00E5FF" },
     { k: t("stats.deepfakes_flagged"), v: stats.deepfakes_detected, c: "#FF3B30" },
     { k: t("stats.ai_caught"), v: stats.ai_flagged, c: "#FFB800" },
-    { k: t("stats.uptime"), v: "99.9%", c: "#00FF66" },
+    { k: t("stats.uptime"), v: "Gemini", c: "#00FF66" },
   ];
 
   return (

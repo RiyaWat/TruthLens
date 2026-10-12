@@ -58,7 +58,7 @@ def render_og(scan: Dict) -> bytes:
     # brand row
     d.rectangle([60, 50, 86, 76], fill=(0, 0, 0), outline=cyan, width=2)
     d.text((96, 51), "TRUTHLENS", fill=(255, 255, 255), font=_font(20, bold=True))
-    d.text((230, 56), "FORENSIC REPORT", fill=cyan, font=_font(14, bold=True))
+    d.text((230, 56), "AI-ASSISTED SCAN", fill=cyan, font=_font(14, bold=True))
 
     # type label
     d.text((60, 110), TYPE_LABEL.get(scan.get("type") or "", "FORENSIC REPORT"),

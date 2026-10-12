@@ -11,10 +11,10 @@
     "getExtension": "Obtener extensión"
   },
   "hero": {
-    "badge": "En vivo · Detección Forense de IA",
+    "badge": "Análisis asistido por IA",
     "headline1": "Ver a través",
     "headline2": "del deepfake.",
-    "subhead": "TruthLens es una herramienta forense contra deepfakes. Análisis en tiempo real de texto, imágenes, video y URLs — veredictos instantáneos sobre lo hecho por humanos y lo hecho por máquinas.",
+    "subhead": "TruthLens es una extensión de navegador y un panel que le pide a un modelo de IA (Google Gemini) que busque señales de que un texto, una imagen, un video o una página web fueron generados por máquina. Obtienes una estimación rápida con sus razones: una segunda opinión, no una prueba.",
     "cta_run": "Ejecutar análisis",
     "cta_install": "Instalar extensión",
     "scroll": "Desplazar"
@@ -23,12 +23,12 @@
     "scans_performed": "análisis realizados",
     "deepfakes_flagged": "deepfakes detectados",
     "ai_caught": "contenido IA detectado",
-    "uptime": "actividad"
+    "uptime": "modelo de análisis"
   },
   "dashboard": {
     "section_label": "// ANÁLISIS EN VIVO",
-    "title": "Ejecuta un análisis forense.",
-    "subtitle": "Pega un texto, suelta una imagen o video, o analiza una URL. TruthLens devuelve un veredicto en segundos.",
+    "title": "Ejecuta un análisis.",
+    "subtitle": "Pega texto, suelta una imagen o video, o analiza una URL. TruthLens devuelve una estimación asistida por IA en segundos.",
     "tab_text": "Texto",
     "tab_image": "Imagen",
     "tab_video": "Video",
@@ -53,18 +53,19 @@
     "chars": "caracteres"
   },
   "verdict": {
-    "scanning": "// ANÁLISIS FORENSE EN CURSO",
-    "scanning_sub": "Examinando artefactos de frecuencia, inconsistencias anatómicas, patrones lingüísticos…",
-    "prob_ai": "probabilidad IA",
-    "confidence": "confianza",
+    "scanning": "// ANÁLISIS EN CURSO",
+    "scanning_sub": "Pidiendo al modelo de IA que busque señales de generación automática…",
+    "prob_ai": "probabilidad estimada de IA",
+    "confidence": "confianza del modelo",
     "reasoning": "// razonamiento",
-    "markers": "// marcadores forenses",
+    "markers": "// señales detectadas",
     "open_report": "Ver informe completo →",
     "human": "Probable humano",
-    "ai": "Generado por IA",
-    "deepfake": "Deepfake detectado",
+    "ai": "Probablemente generado por IA",
+    "deepfake": "Posible deepfake",
     "uncertain": "Incierto",
-    "share": "Compartir"
+    "share": "Compartir",
+    "disclaimer": "Estimación asistida por IA de Google Gemini, un modelo de IA general, no un detector de deepfakes entrenado. Tómalo como una pista, no como una prueba."
   },
   "recent": {
     "title": "// análisis recientes",
@@ -72,7 +73,7 @@
   },
   "report": {
     "back": "volver al panel",
-    "header": "// INFORME FORENSE —",
+    "header": "// INFORME DE ANÁLISIS —",
     "preview": "// vista previa",
     "download_pdf": "Descargar PDF",
     "share_link": "Copiar enlace",
@@ -117,7 +118,7 @@
   },
   "history": {
     "label": "// HISTORIAL",
-    "title": "Tu registro forense.",
+    "title": "Tu historial de análisis.",
     "subtitle": "Cada análisis ejecutado desde este dispositivo. Anónimo y guardado por id de sesión.",
     "filter_all": "Todos",
     "filter_text": "Texto",
@@ -146,18 +147,18 @@
     "title_2": "ve a través de la mentira.",
     "step1_title": "Captura",
     "step1_body": "Pega texto, suelta una imagen o video, o aporta una URL. La extensión del navegador permite analizar en cualquier página.",
-    "step2_title": "Modelos multimodales",
-    "step2_body": "Enrutado a GPT-5.2 para análisis forense lingüístico o Gemini 3 Pro para análisis visual de imágenes/fotogramas.",
-    "step3_title": "Marcadores forenses",
-    "step3_body": "Errores anatómicos, artefactos de frecuencia, inconsistencias de iluminación, patrones de cadencia — clasificados por severidad.",
+    "step2_title": "Modelo de IA",
+    "step2_body": "Se envía a Google Gemini (gemini-2.5-flash) con instrucciones para buscar las señales de abajo. Es un modelo de IA general, no un detector entrenado para esto.",
+    "step3_title": "Señales",
+    "step3_body": "Errores anatómicos, iluminación extraña, frases repetitivas: cada una marcada por gravedad para que juzgues tú.",
     "step4_title": "Veredicto",
-    "step4_body": "Probabilidad sintética 0–100 con clasificación clara: HUMANO, IA, DEEPFAKE o INCIERTO."
+    "step4_body": "Una estimación de 0 a 100 con una etiqueta: HUMANO, IA, DEEPFAKE o INCIERTO. Un punto de partida, no una respuesta final."
   },
   "extension": {
     "label": "// EXTENSIÓN CHROME · v1.0",
     "title_1": "Inspecciona cualquier cosa.",
     "title_2": "Justo donde lees.",
-    "subtitle": "Haz clic derecho en cualquier imagen o texto seleccionado — TruthLens superpone un veredicto al instante. Funciona en sitios de noticias, redes sociales, en todas partes.",
+    "subtitle": "Haz clic derecho en cualquier imagen o texto seleccionado y TruthLens muestra la estimación de la IA en la propia página. Funciona en sitios de noticias, redes sociales, en cualquier lugar.",
     "download": "Descargar .zip",
     "manifest": "Manifest V3",
     "install_title": "# instrucciones de instalación",
@@ -167,7 +168,7 @@
     "install_4": "4. clic en Cargar descomprimida → selecciona la carpeta"
   },
   "footer": {
-    "tag": "inteligencia anti-deepfake"
+    "tag": "análisis de contenido asistido por IA"
   },
   "login": {
     "label": "// CUENTA",

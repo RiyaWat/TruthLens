@@ -4,14 +4,14 @@
 **TruthLens — Deepfake & AI Detector**
 
 ## Short description (132 chars)
-Forensic counter-deepfake. Right-click any image, text, or page to get an instant verdict — HUMAN / AI / DEEPFAKE / UNCERTAIN.
+Right-click any image, text, or page for an AI-assisted estimate — HUMAN / AI / DEEPFAKE / UNCERTAIN.
 
 ## Detailed description
-TruthLens is a forensic counter-deepfake browser tool. It analyses text, images, video, and URLs in real time and returns a verdict you can act on.
+TruthLens asks a general AI model (Google Gemini) to check text, images, video, and URLs for signs of AI generation and returns an estimate with its reasons. It is a hint, not proof.
 
 **What TruthLens does**
-- 🔬 **Text** — flags AI-written content with linguistic forensics (GPT-5.2)
-- 🖼️ **Images** — detects AI-generated photos and deepfakes of real people (Gemini 3 Pro multimodal)
+- 🔬 **Text** — estimates whether text was AI-written (Google Gemini)
+- 🖼️ **Images** — looks for signs of AI-generated photos and deepfakes (Google Gemini)
 - 🎥 **Video** — frame-sampled analysis for synthetic / manipulated clips
 - 🌐 **URLs** — scrapes a public page and runs a trust-and-AI scan
 - 📊 **Reports** — every scan gets a 0–100 synthetic score, classification, confidence, severity-graded forensic markers, and a downloadable PDF

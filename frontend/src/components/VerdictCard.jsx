@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const VERDICTS = {
-  HUMAN:     { color: "#00FF66", key: "verdict.human",     Icon: ShieldCheck,    blurb: "No strong synthesis markers detected." },
-  AI:        { color: "#FFB800", key: "verdict.ai",        Icon: Robot,          blurb: "Strong AI fingerprints in this content." },
-  DEEPFAKE:  { color: "#FF3B30", key: "verdict.deepfake",  Icon: WarningOctagon, blurb: "Likely a manipulated/deepfake media." },
+  HUMAN:     { color: "#00FF66", key: "verdict.human",     Icon: ShieldCheck,    blurb: "The model didn't see strong signs of AI generation." },
+  AI:        { color: "#FFB800", key: "verdict.ai",        Icon: Robot,          blurb: "The model sees signs this was AI-generated." },
+  DEEPFAKE:  { color: "#FF3B30", key: "verdict.deepfake",  Icon: WarningOctagon, blurb: "The model sees signs of manipulation." },
   UNCERTAIN: { color: "#A1A1AA", key: "verdict.uncertain", Icon: Question,       blurb: "Mixed signals — interpret carefully." },
 };
 
@@ -117,6 +117,13 @@ export default function VerdictCard({ scan, scanning, expanded }) {
             </div>
           </div>
         )}
+
+        <p
+          data-testid="verdict-disclaimer"
+          className="mt-6 text-xs text-white/45 leading-relaxed border-l-2 border-white/15 pl-3"
+        >
+          {t("verdict.disclaimer")}
+        </p>
 
         {!expanded && (
           <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">

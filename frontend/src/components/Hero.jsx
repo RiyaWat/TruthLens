@@ -83,10 +83,10 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.3 }}
           className="hidden lg:flex col-span-4 flex-col gap-3 self-end"
         >
-          <SpecRow k="MODELS" v="GPT-5.2 · Gemini 3 Pro" />
-          <SpecRow k="LATENCY" v="< 8s avg" />
+          <SpecRow k="MODEL" v="Google Gemini 2.5 Flash" />
+          <SpecRow k="OUTPUT" v="ESTIMATE + REASONS" />
           <SpecRow k="MODES" v="TEXT · IMG · VIDEO · URL" />
-          <SpecRow k="PROTOCOL" v="TL-FORENSIC v1" />
+          <SpecRow k="STATUS" v="AI-ASSISTED · NOT PROOF" />
         </motion.div>
       </div>
       <a

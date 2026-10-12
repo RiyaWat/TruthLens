@@ -19,7 +19,7 @@ export default function PrivacyPage() {
         </div>
         <article className="space-y-6 text-white/80 leading-relaxed text-sm sm:text-base">
           <Section title="1 · What TruthLens does">
-            TruthLens is a forensic counter-deepfake tool. It analyzes <em>text, images, video and URLs</em> you submit and returns a verdict
+            TruthLens is an AI-assisted tool for spotting AI-generated content. It analyzes <em>text, images, video and URLs</em> you submit and returns a verdict
             (HUMAN / AI / DEEPFAKE / UNCERTAIN) with reasoning.
           </Section>
           <Section title="2 · What we collect">
