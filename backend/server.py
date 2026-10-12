@@ -29,6 +29,7 @@ load_dotenv(ROOT_DIR / '.env')
 
 # AI provider: Google Gemini API (free tier key from https://aistudio.google.com/apikey)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+logging.getLogger("httpx").setLevel(logging.WARNING)  # never log request URLs
 GEMINI_TEXT_MODEL = os.environ.get('GEMINI_TEXT_MODEL', 'gemini-3.8-flash')
 GEMINI_VISION_MODEL = os.environ.get('GEMINI_VISION_MODEL', 'gemini-3.8-flash')
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
@@ -247,11 +248,22 @@ async def _gemini(model: str, system: str, parts: list) -> str:
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
     }
-    try:
-        async with httpx.AsyncClient(timeout=90) as http:
-            r = await http.post(url, params={"key": GEMINI_API_KEY}, json=body)
-    except httpx.HTTPError as e:
-        raise AIUnavailable(cause=f"network error: {type(e).__name__}")
+    # Google's free tier sometimes answers 500/503 ("high demand") for a moment;
+    # retry a few times with a short backoff before giving up.
+    r = None
+    for attempt in range(4):
+        try:
+            async with httpx.AsyncClient(timeout=90) as http:
+                r = await http.post(url, headers={"x-goog-api-key": GEMINI_API_KEY}, json=body)
+        except httpx.HTTPError as e:
+            if attempt == 3:
+                raise AIUnavailable(cause=f"network error: {type(e).__name__}")
+            await asyncio.sleep(1.5 * (attempt + 1))
+            continue
+        if r.status_code in (500, 502, 503, 504) and attempt < 3:
+            await asyncio.sleep(1.5 * (attempt + 1))
+            continue
+        break
     if r.status_code == 429:
         raise AIUnavailable(AI_BUSY_MSG, cause="Gemini 429 (quota/rate limit)")
     if r.status_code >= 400:
