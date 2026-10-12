@@ -148,7 +148,7 @@
     "step1_title": "Capture",
     "step1_body": "Paste text, drop an image or video, or feed a URL. The browser extension lets you scan in-place on any webpage.",
     "step2_title": "AI model",
-    "step2_body": "Sent to Google Gemini (gemini-2.5-flash) with a prompt asking it to look for the tell-tale signs below. It's a general AI model, not a purpose-trained detector.",
+    "step2_body": "Sent to Google Gemini (gemini-3.8-flash) with a prompt asking it to look for the tell-tale signs below. It's a general AI model, not a purpose-trained detector.",
     "step3_title": "Signals",
     "step3_body": "Things like anatomical errors, odd lighting, repetitive phrasing, each tagged by severity so you can judge for yourself.",
     "step4_title": "Verdict",

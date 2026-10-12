@@ -148,7 +148,7 @@
     "step1_title": "Captura",
     "step1_body": "Pega texto, suelta una imagen o video, o aporta una URL. La extensión del navegador permite analizar en cualquier página.",
     "step2_title": "Modelo de IA",
-    "step2_body": "Se envía a Google Gemini (gemini-2.5-flash) con instrucciones para buscar las señales de abajo. Es un modelo de IA general, no un detector entrenado para esto.",
+    "step2_body": "Se envía a Google Gemini (gemini-3.8-flash) con instrucciones para buscar las señales de abajo. Es un modelo de IA general, no un detector entrenado para esto.",
     "step3_title": "Señales",
     "step3_body": "Errores anatómicos, iluminación extraña, frases repetitivas: cada una marcada por gravedad para que juzgues tú.",
     "step4_title": "Veredicto",

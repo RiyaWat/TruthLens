@@ -29,8 +29,8 @@ load_dotenv(ROOT_DIR / '.env')
 
 # AI provider: Google Gemini API (free tier key from https://aistudio.google.com/apikey)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-GEMINI_TEXT_MODEL = os.environ.get('GEMINI_TEXT_MODEL', 'gemini-2.5-flash')
-GEMINI_VISION_MODEL = os.environ.get('GEMINI_VISION_MODEL', 'gemini-2.5-flash')
+GEMINI_TEXT_MODEL = os.environ.get('GEMINI_TEXT_MODEL', 'gemini-3.8-flash')
+GEMINI_VISION_MODEL = os.environ.get('GEMINI_VISION_MODEL', 'gemini-3.8-flash')
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'truthlens')
 
