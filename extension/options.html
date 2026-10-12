@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8" /><title>TruthLens · Settings</title>
+<style>
+  body { background:#0A0A0A; color:#fff; font-family:'IBM Plex Sans',system-ui,sans-serif; padding:24px; max-width:520px; }
+  h1 { font-family:'Chivo',sans-serif; font-weight:900; letter-spacing:-.02em; }
+  label { display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.25em; color:#00E5FF; margin-top:14px; margin-bottom:6px; text-transform:uppercase; }
+  input { width:100%; background:#000; color:#fff; padding:10px; border:1px solid rgba(255,255,255,.15); }
+  button { background:#00E5FF; color:#000; border:0; padding:10px 18px; margin-top:16px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.3em; cursor:pointer; font-weight:700; }
+  p { color: rgba(255,255,255,.65); font-size: 13px; }
+  small { color: rgba(255,255,255,.4); font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.2em; }
+</style></head>
+<body>
+  <h1>TruthLens · Settings</h1>
+  <p>Configure the API endpoint that the extension talks to. By default it uses the TruthLens hosted backend.</p>
+  <label for="api">API base</label>
+  <input id="api" placeholder="https://your-host/api" />
+  <button id="save">SAVE</button>
+  <p id="msg"></p>
+  <small>session id is auto-generated &amp; stored locally</small>
+  <script src="options.js"></script>
+</body></html>
