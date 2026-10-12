@@ -2,7 +2,7 @@
 
 I built TruthLens to get a quick second opinion on whether something online was made by a person or by AI. It's a web dashboard plus a Chrome extension: paste text, drop an image or a short video, or give it a link, and it comes back with an estimate (Human / AI / Deepfake / Uncertain), a 0–100 score, and the specific signals behind it.
 
-**Live demo:** _coming soon_ (frontend on Vercel, API on Render)
+**▶ Try it live:** [truth-lens-wine.vercel.app](https://truth-lens-wine.vercel.app)
 
 ## An honest note on how it works
 

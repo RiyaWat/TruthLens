@@ -1092,7 +1092,7 @@ async def _catch_unhandled(request: Request, call_next):
 _cors_origins = [o.strip().rstrip("/") for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
 _cors_regex = os.environ.get(
     "CORS_ORIGIN_REGEX",
-    r"https://truthlens[-a-z0-9]*\.vercel\.app|http://localhost(:\d+)?|http://127\.0\.0\.1(:\d+)?",
+    r"https://truth-?lens[-a-z0-9]*\.vercel\.app|http://localhost(:\d+)?|http://127\.0\.0\.1(:\d+)?",
 )
 app.add_middleware(
     CORSMiddleware,
