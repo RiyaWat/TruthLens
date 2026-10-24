@@ -1,4 +1,4 @@
-"""Iteration 4 tests — rate-limiting + /api/usage endpoint.
+"""Rate-limiting + /api/usage endpoint tests.
 
 Strategy:
 - Use a UNIQUE session_id per test class to avoid collateral counter writes
@@ -45,7 +45,7 @@ def _seed_session_hour(session_id: str, count: int):
     return bucket
 
 
-# ---------- /api/usage schema ----------
+# /api/usage schema
 class TestUsageEndpoint:
     def test_usage_new_session_baseline(self):
         sid = _new_session()
@@ -70,7 +70,7 @@ class TestUsageEndpoint:
         assert data["_disabled"] is False
 
 
-# ---------- analyze endpoints increment counters ----------
+# analyze endpoints increment counters
 class TestCountersIncrement:
     def test_text_increments(self):
         sid = _new_session()
@@ -87,20 +87,18 @@ class TestCountersIncrement:
         body = {"session_id": sid, "url": "https://example.com"}
         r = requests.post(f"{API}/analyze/url", json=body, timeout=60)
         # Note: example.com may have <100 chars text -> 400; we only need the
-        # rate-limit consume to fire BEFORE that check. So use httpbin.
+        # rate-limit consume to fire BEFORE that check, so retry with a longer page.
         if r.status_code == 400:
             body["url"] = "https://en.wikipedia.org/wiki/Special:Random"
             r = requests.post(f"{API}/analyze/url", json=body, timeout=120)
-        assert r.status_code in (200, 400, 502), r.text  # consume happens before fetch errors? check
+        assert r.status_code in (200, 400, 502), r.text
         u = requests.get(f"{API}/usage", params={"session_id": sid}, timeout=20).json()
-        # url consume happens BEFORE the URL fetch (see server.py line 510 — actually after .startswith check)
         assert u["url"]["hour_used"] >= 1, f"url hour_used should be >=1, got {u['url']}"
 
     def test_image_increments(self):
         sid = _new_session()
-        # 1x1 white JPEG (smallest valid). Image prefilter short-circuits on
+        # Tiny uniform-color JPEG. The image prefilter short-circuits on
         # uniform-color, so this is cheap (no LLM hit).
-        # Smallest valid JPEG bytes (taken from iter-3 test): use a generated tiny image.
         import io as _io
         from PIL import Image
         im = Image.new("RGB", (16, 16), (200, 200, 200))
@@ -145,7 +143,7 @@ class TestCountersIncrement:
         assert u["url"]["hour_used"] >= 1, u["url"]
 
 
-# ---------- 429 path via bucket-seeding ----------
+# 429 path via bucket-seeding
 class TestRateLimit429:
     def test_seeded_bucket_returns_429_with_friendly_detail(self):
         sid = _new_session()
@@ -167,7 +165,6 @@ class TestRateLimit429:
         msg = detail.get("message", "")
         assert "Hourly limit reached for text" in msg
         assert "30/h" in msg
-        # cleanup
         _db.ratelimit.delete_one({"bucket": bucket})
 
     def test_usage_after_429_shows_zero_remaining(self):
@@ -186,7 +183,7 @@ class TestRateLimit429:
         _db.ratelimit.delete_one({"bucket": bucket})
 
 
-# ---------- regression: a single working /analyze/text flow ----------
+# regression: a single working /analyze/text flow
 class TestRegression:
     def test_analyze_text_basic_flow(self):
         sid = _new_session()
@@ -202,7 +199,7 @@ class TestRegression:
         assert data.get("session_id") == sid
 
 
-# ---------- cleanup TEST_ session ratelimit rows ----------
+# cleanup TEST_ session ratelimit rows
 @pytest.fixture(scope="session", autouse=True)
 def _cleanup_test_buckets():
     yield

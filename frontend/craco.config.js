@@ -1,4 +1,3 @@
-// craco.config.js: Create React App with an "@" import alias and React hooks lint rules.
 const path = require("path");
 
 module.exports = {

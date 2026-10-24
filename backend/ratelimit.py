@@ -18,7 +18,7 @@ from typing import Tuple, Dict
 from fastapi import HTTPException, Request
 
 
-# ---- limits (env-overridable) ----
+# limits (env-overridable)
 def _int_env(k: str, default: int) -> int:
     try:
         return int(os.environ.get(k, default))
@@ -39,7 +39,7 @@ IP_HOUR_LIMIT = _int_env("RL_IP_HOUR", 200)
 RL_DISABLED = os.environ.get("RL_DISABLED", "0") in ("1", "true", "yes")
 
 
-# ---- bucket helpers ----
+# bucket helpers
 def _bucket(scope: str, key: str, window: str, kind: str | None = None) -> str:
     """Compose a bucket id, e.g. sess:abc:text:hour:1738742400.
 
@@ -98,7 +98,7 @@ def _seconds_until_next(window: str) -> int:
     return (3600 - (now % 3600)) if window == "hour" else (86400 - (now % 86400))
 
 
-# ---- public API ----
+# public API
 async def check_and_consume(db, kind: str, session_id: str, request: Request | None = None,
                             cost: int = 1) -> Dict[str, int]:
     """Increment counters and raise 429 if any cap is exceeded.

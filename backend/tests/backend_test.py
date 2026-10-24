@@ -31,7 +31,7 @@ def client():
     return s
 
 
-# ------------------ root + stats ------------------
+# root + stats
 class TestBasic:
     def test_root(self, client):
         r = client.get(f"{API}/", timeout=20)
@@ -52,7 +52,7 @@ class TestBasic:
             assert t in d["by_type"]
 
 
-# ------------------ text ------------------
+# text
 class TestText:
     def test_text_too_short(self, client):
         r = client.post(f"{API}/analyze/text",
@@ -80,7 +80,7 @@ class TestText:
         assert r2.json()["id"] == gid
 
 
-# ------------------ url ------------------
+# url
 class TestUrl:
     def test_bad_url(self, client):
         r = client.post(f"{API}/analyze/url",
@@ -108,7 +108,7 @@ class TestUrl:
         assert d["preview"].startswith("https://")
 
 
-# ------------------ image ------------------
+# image
 def _make_real_jpeg_b64():
     """Build a small JPEG with shapes/text so it has features."""
     img = Image.new("RGB", (256, 256), (200, 220, 255))
@@ -145,7 +145,7 @@ class TestImage:
         assert isinstance(d["markers"], list)
 
 
-# ------------------ scans listing ------------------
+# scans listing
 class TestScans:
     def test_list_by_session(self, client):
         # Should have entries created in earlier tests
@@ -162,7 +162,7 @@ class TestScans:
         assert r.status_code == 404
 
 
-# ------------------ extension ------------------
+# extension
 class TestExtension:
     def test_download_zip(self, client):
         r = client.get(f"{API}/extension/download", timeout=30)
@@ -186,7 +186,7 @@ class TestExtension:
             assert BASE_URL in bg, "backend URL not injected into background.js"
 
 
-# ------------------ P2: Compare ------------------
+# Compare
 HUMAN_TEXT = (
     "I went down to the river yesterday with my brother because it had been ages since "
     "we'd just messed around with fishing rods. Half the worms got away, the dog stole a "
@@ -258,10 +258,9 @@ class TestCompare:
         assert "Alpha" in r.text
 
 
-# ------------------ P2: PDF export ------------------
+# PDF export
 class TestPdf:
     def test_pdf_for_existing_scan(self, client):
-        # Create a text scan first
         content = ("This is a sample paragraph used to test PDF export of TruthLens scan "
                    "results. It contains enough text for the analyzer to produce reasoning.")
         r = client.post(f"{API}/analyze/text",
@@ -280,7 +279,7 @@ class TestPdf:
         assert r.status_code == 404
 
 
-# ------------------ P2: Multi-language ------------------
+# Multi-language
 class TestLanguage:
     def test_spanish_detection(self, client):
         spanish = (
@@ -317,7 +316,7 @@ class TestLanguage:
         assert r.json().get("language"), "language field missing for English text"
 
 
-# ------------------ P3: Object storage + file proxy ------------------
+# Object storage + file proxy
 def _make_uniform_red_png_b64():
     img = Image.new("RGB", (32, 32), (255, 0, 0))
     buf = io.BytesIO()
@@ -358,10 +357,9 @@ class TestStorageAndFiles:
         assert r.status_code == 404
 
 
-# ------------------ P3: OG image ------------------
+# OG image
 class TestOGImage:
     def test_og_for_existing(self, client):
-        # create a quick text scan
         content = ("This is sample text for OG image rendering testing of TruthLens. "
                    "It needs to be at least twenty characters long for the analyzer.")
         r = client.post(f"{API}/analyze/text",
@@ -381,7 +379,7 @@ class TestOGImage:
         assert r.status_code == 404
 
 
-# ------------------ P3: Pre-filter ------------------
+# Pre-filter
 class TestPrefilter:
     def test_text_ai_tell_flag(self, client):
         content = ("As an AI language model, I cannot provide personal opinions, but I can "
@@ -414,7 +412,7 @@ class TestPrefilter:
         assert "uniform" in rr or "blank" in rr or "solid" in rr, d.get("reasoning")
 
 
-# ------------------ P3: Bulk ------------------
+# Bulk
 class TestBulk:
     def test_bulk_mixed(self, client):
         payload = {
@@ -447,7 +445,7 @@ class TestBulk:
         assert r.status_code == 400
 
 
-# ------------------ P3: Settings + Webhooks ------------------
+# Settings + Webhooks
 class TestSettings:
     def test_settings_roundtrip(self, client):
         sid = f"TEST_set_{uuid.uuid4().hex[:8]}"
@@ -482,7 +480,7 @@ class TestSettings:
         assert d.get("status") == 200
 
 
-# ------------------ P3: Auth stubs ------------------
+# Auth stubs
 class TestAuthStub:
     def test_request_link_503(self, client):
         r = client.post(f"{API}/auth/request-link", json={}, timeout=20)
@@ -495,7 +493,7 @@ class TestAuthStub:
         assert d.get("authenticated") is False
 
 
-# ------------------ P2: Extension icons ------------------
+# Extension icons
 class TestExtensionIcons:
     def test_zip_contains_polished_icons(self, client):
         r = client.get(f"{API}/extension/download", timeout=30)

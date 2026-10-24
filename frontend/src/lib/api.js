@@ -16,7 +16,7 @@ export const sessionId = () => {
 
 const cx = axios.create({ baseURL: API, timeout: 120000 });
 
-// ---- Free-tier wake-up handling ----
+// Free-tier wake-up handling
 // The free backend sleeps after ~15 min idle; the first request then takes ~30 s
 // (or fails while it boots). We show a banner and quietly retry.
 let waking = false;

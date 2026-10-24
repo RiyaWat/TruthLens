@@ -47,7 +47,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 log = logging.getLogger("truthlens")
 
-# ----------------- Models -----------------
+# Models
 ScanType = Literal["text", "image", "video", "url"]
 Verdict = Literal["HUMAN", "AI", "DEEPFAKE", "UNCERTAIN"]
 
@@ -98,7 +98,7 @@ class UrlRequest(BaseModel):
     url: str
 
 
-# ----------------- LLM helpers -----------------
+# LLM helpers
 SYSTEM_TEXT = (
     "You are TruthLens, a forensic AI-content detector. Given a TEXT passage in ANY language, judge how "
     "likely it was written by an AI model versus a human. Adapt your linguistic-forensics reasoning to "
@@ -291,7 +291,7 @@ async def _llm_image(system: str, user_text: str, images_b64: List[str]) -> dict
     return _extract_json(resp)
 
 
-# ----------------- Persistence helpers -----------------
+# Persistence helpers
 async def _save_scan(scan: ScanResult) -> ScanResult:
     doc = scan.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
@@ -369,7 +369,7 @@ def _public_scan(doc: dict) -> dict:
     return doc
 
 
-# ----------------- Image helpers -----------------
+# Image helpers
 LANG_CODE_TO_NAME = {
     "en": "English", "es": "Spanish", "fr": "French", "de": "German", "it": "Italian",
     "pt": "Portuguese", "ru": "Russian", "ja": "Japanese", "ko": "Korean", "zh-cn": "Chinese (Simplified)",
@@ -455,7 +455,7 @@ def _extract_video_frames(b64: str, n_frames: int = 4, max_scan: int = 240) -> L
             pass
 
 
-# ----------------- Routes -----------------
+# Routes
 @api.get("/")
 async def root():
     return {"app": "TruthLens", "status": "online", "version": "1.0.0"}
@@ -648,7 +648,7 @@ async def scan_pdf(scan_id: str):
     )
 
 
-# ----- Comparison -----
+# Comparison
 class CompareItem(BaseModel):
     label: str
     type: Literal["text", "image", "url", "video"]
@@ -706,7 +706,7 @@ async def analyze_compare(req: CompareRequest):
     return CompareResponse(items=results, winner=winner, delta=delta)
 
 
-# ----- PDF builder -----
+# PDF builder
 def _build_pdf(doc: dict) -> bytes:
     from reportlab.lib.pagesizes import LETTER
     from reportlab.lib.units import inch
@@ -907,7 +907,7 @@ async def usage(session_id: str):
     return await usage_for(db, session_id)
 
 
-# ---- Chrome Extension download ----
+# Chrome Extension download
 EXT_DIR = Path(__file__).resolve().parent.parent / "extension"
 
 
@@ -948,7 +948,7 @@ async def extension_download():
     )
 
 
-# ----- OG share-card image (public) -----
+# OG share-card image (public)
 @api.get("/scans/{scan_id}/og.png")
 async def scan_og(scan_id: str):
     doc = await db.scans.find_one({"id": scan_id}, {"_id": 0})
@@ -962,7 +962,7 @@ async def scan_og(scan_id: str):
     )
 
 
-# ----- File proxy (object storage download) -----
+# File proxy (object storage download)
 @api.get("/files/{path:path}")
 async def file_proxy(path: str):
     # Security: only allow the truthlens app prefix
@@ -976,7 +976,7 @@ async def file_proxy(path: str):
                     headers={"Cache-Control": "public, max-age=600"})
 
 
-# ----- Settings (per-session) -----
+# Settings (per-session)
 class WebhookSettings(BaseModel):
     session_id: str
     webhook_url: Optional[str] = None  # generic JSON webhook (Slack/Discord/Make/Zapier...)
@@ -1023,7 +1023,7 @@ async def test_webhook(session_id: str):
         raise HTTPException(502, f"Webhook test failed: {e}")
 
 
-# ----- Bulk multi-file scan -----
+# Bulk multi-file scan
 class BulkItem(BaseModel):
     kind: Literal["image", "text", "url"]
     image_base64: Optional[str] = None
@@ -1072,7 +1072,7 @@ async def analyze_bulk(req: BulkRequest):
     return {"results": results, "summary": summary}
 
 
-# ----- Auth (magic-link) — stub: coming soon -----
+# Auth (magic-link) — stub: coming soon
 @api.post("/auth/request-link")
 async def auth_request_link():
     raise HTTPException(503, "Email magic-link login is coming soon. Set RESEND_API_KEY to enable.")
@@ -1083,7 +1083,6 @@ async def auth_me():
     return {"authenticated": False, "reason": "magic-link login not yet enabled"}
 
 
-# Mount router
 app.include_router(api)
 
 

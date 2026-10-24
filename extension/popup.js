@@ -1,4 +1,3 @@
-// TruthLens popup
 const $ = (s) => document.querySelector(s);
 
 document.querySelectorAll(".tab").forEach((t) => {
