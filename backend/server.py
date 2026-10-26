@@ -33,7 +33,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)  # never log request URLs
 GEMINI_TEXT_MODEL = os.environ.get('GEMINI_TEXT_MODEL', 'gemini-3.8-flash')
 GEMINI_VISION_MODEL = os.environ.get('GEMINI_VISION_MODEL', 'gemini-3.8-flash')
 GEMINI_THINKING_LEVEL = os.environ.get('GEMINI_THINKING_LEVEL', 'low')
-GEMINI_TIMEOUT_S = float(os.environ.get('GEMINI_TIMEOUT_S', '35'))
+GEMINI_TIMEOUT_S = float(os.environ.get('GEMINI_TIMEOUT_S', '25'))
+GEMINI_FALLBACK_MODEL = os.environ.get('GEMINI_FALLBACK_MODEL', 'gemini-3.1-flash-lite')
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'truthlens')
 
@@ -248,6 +249,18 @@ def _require_ai() -> None:
 
 
 async def _gemini(model: str, system: str, parts: list) -> str:
+    """Try the main model; if it stalls or is overloaded, fall back to the lighter one."""
+    try:
+        return await _gemini_once(model, system, parts)
+    except AIUnavailable as e:
+        retryable = e.message == AI_SLOW_MSG or "HTTP 5" in (e.cause or "")
+        if not retryable or not GEMINI_FALLBACK_MODEL or GEMINI_FALLBACK_MODEL == model:
+            raise
+        log.warning(f"{model} failed ({e.cause}); falling back to {GEMINI_FALLBACK_MODEL}")
+        return await _gemini_once(GEMINI_FALLBACK_MODEL, system, parts, attempts=1)
+
+
+async def _gemini_once(model: str, system: str, parts: list, attempts: int = 0) -> str:
     """Call the Gemini generateContent REST endpoint and return the reply text."""
     if not GEMINI_API_KEY:
         raise AIUnavailable(cause="GEMINI_API_KEY is not set")
@@ -264,20 +277,21 @@ async def _gemini(model: str, system: str, parts: list) -> str:
     # Google's free tier sometimes answers 500/503 ("high demand") for a moment,
     # so retry once, but keep the total wait short so the UI never hangs.
     r = None
-    for attempt in range(2):
+    for attempt in range(attempts + 1):
         try:
             async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT_S) as http:
                 r = await http.post(url, headers={"x-goog-api-key": GEMINI_API_KEY}, json=body)
         except httpx.HTTPError as e:
-            if attempt == 1:
+            if attempt >= attempts:
                 raise AIUnavailable(AI_SLOW_MSG, cause=f"network error: {type(e).__name__}")
             await asyncio.sleep(1)
             continue
         if r.status_code == 400 and "thinking" in r.text.lower() and "thinkingConfig" in config:
             # Model doesn't support the thinking setting: send it again without it.
             config.pop("thinkingConfig")
-            continue
-        if r.status_code in (500, 502, 503, 504) and attempt == 0:
+            async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT_S) as http:
+                r = await http.post(url, headers={"x-goog-api-key": GEMINI_API_KEY}, json=body)
+        if r.status_code in (500, 502, 503, 504) and attempt < attempts:
             await asyncio.sleep(1)
             continue
         break
