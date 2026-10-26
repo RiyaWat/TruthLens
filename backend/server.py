@@ -32,6 +32,8 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 logging.getLogger("httpx").setLevel(logging.WARNING)  # never log request URLs
 GEMINI_TEXT_MODEL = os.environ.get('GEMINI_TEXT_MODEL', 'gemini-3.8-flash')
 GEMINI_VISION_MODEL = os.environ.get('GEMINI_VISION_MODEL', 'gemini-3.8-flash')
+GEMINI_THINKING_LEVEL = os.environ.get('GEMINI_THINKING_LEVEL', 'low')
+GEMINI_TIMEOUT_S = float(os.environ.get('GEMINI_TIMEOUT_S', '35'))
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'truthlens')
 
@@ -211,6 +213,13 @@ AI_BUSY_MSG = (
     "Analysis is temporarily unavailable: the free AI quota is used up for the moment. "
     "Please try again in a minute or two."
 )
+AI_DAILY_MSG = (
+    "Analysis is unavailable for today: the free AI quota has been used up. "
+    "It resets tomorrow."
+)
+AI_SLOW_MSG = (
+    "The AI is taking too long to respond right now. Please try again in a minute."
+)
 
 
 class AIUnavailable(Exception):
@@ -243,28 +252,38 @@ async def _gemini(model: str, system: str, parts: list) -> str:
     if not GEMINI_API_KEY:
         raise AIUnavailable(cause="GEMINI_API_KEY is not set")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    config = {"temperature": 0.2, "responseMimeType": "application/json"}
+    # Low thinking keeps image scans fast; the verdict doesn't need long reasoning.
+    if GEMINI_THINKING_LEVEL:
+        config["thinkingConfig"] = {"thinkingLevel": GEMINI_THINKING_LEVEL}
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": parts}],
-        "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
+        "generationConfig": config,
     }
-    # Google's free tier sometimes answers 500/503 ("high demand") for a moment;
-    # retry a few times with a short backoff before giving up.
+    # Google's free tier sometimes answers 500/503 ("high demand") for a moment,
+    # so retry once, but keep the total wait short so the UI never hangs.
     r = None
-    for attempt in range(4):
+    for attempt in range(2):
         try:
-            async with httpx.AsyncClient(timeout=90) as http:
+            async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT_S) as http:
                 r = await http.post(url, headers={"x-goog-api-key": GEMINI_API_KEY}, json=body)
         except httpx.HTTPError as e:
-            if attempt == 3:
-                raise AIUnavailable(cause=f"network error: {type(e).__name__}")
-            await asyncio.sleep(1.5 * (attempt + 1))
+            if attempt == 1:
+                raise AIUnavailable(AI_SLOW_MSG, cause=f"network error: {type(e).__name__}")
+            await asyncio.sleep(1)
             continue
-        if r.status_code in (500, 502, 503, 504) and attempt < 3:
-            await asyncio.sleep(1.5 * (attempt + 1))
+        if r.status_code == 400 and "thinking" in r.text.lower() and "thinkingConfig" in config:
+            # Model doesn't support the thinking setting: send it again without it.
+            config.pop("thinkingConfig")
+            continue
+        if r.status_code in (500, 502, 503, 504) and attempt == 0:
+            await asyncio.sleep(1)
             continue
         break
     if r.status_code == 429:
+        if "perday" in r.text.lower().replace("_", "").replace(" ", ""):
+            raise AIUnavailable(AI_DAILY_MSG, cause="Gemini 429 (daily quota)")
         raise AIUnavailable(AI_BUSY_MSG, cause="Gemini 429 (quota/rate limit)")
     if r.status_code >= 400:
         raise AIUnavailable(cause=f"Gemini HTTP {r.status_code}: {r.text[:300]}")
