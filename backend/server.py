@@ -120,6 +120,10 @@ SYSTEM_IMAGE = (
     "a real photograph, a generative-AI image (Stable Diffusion / Midjourney / DALL-E), or a deepfake of a real person. "
     "Look for: anatomical errors (hands, eyes, ears, teeth), background inconsistencies, lighting/shadow mismatch, "
     "skin smoothness, text artifacts, frequency artifacts, GAN/diffusion fingerprints. "
+    "CALIBRATION: Most images people upload are ordinary phone photos. Blur, noise, JPEG compression, low light, "
+    "motion, filters, screenshots or low resolution are NOT evidence of AI. Only classify AI or DEEPFAKE when you can "
+    "name specific, concrete artifacts (e.g. malformed hands, garbled text, impossible geometry, melted details). "
+    "If the evidence is weak or you are unsure, use UNCERTAIN with a score between 35 and 65. "
     "Respond ONLY with strict JSON:\n"
     "{\"score\": 0-100 (probability synthetic/AI, integer), "
     "\"classification\": one of [\"HUMAN\",\"AI\",\"DEEPFAKE\",\"UNCERTAIN\"], "
@@ -134,7 +138,12 @@ SYSTEM_VIDEO = (
     "You are TruthLens, a forensic deepfake video detector. You will receive several frames sampled from a video. "
     "Judge whether the video appears to be a deepfake, generative-AI video, or authentic recording. "
     "Look across frames for: temporal inconsistencies, face/body warping, blinking patterns, lip-sync mismatch, "
-    "lighting flicker, edge artifacts. Respond ONLY with strict JSON:\n"
+    "lighting flicker, edge artifacts. "
+    "CALIBRATION: Most videos people upload are ordinary phone recordings. Blur, noise, JPEG compression, low light, "
+    "motion, filters, screenshots or low resolution are NOT evidence of AI. Only classify AI or DEEPFAKE when you can "
+    "name specific, concrete artifacts (e.g. malformed hands, garbled text, impossible geometry, melted details). "
+    "If the evidence is weak or you are unsure, use UNCERTAIN with a score between 35 and 65. "
+    "Respond ONLY with strict JSON:\n"
     "{\"score\": 0-100 (probability synthetic/deepfake, integer), "
     "\"classification\": one of [\"HUMAN\",\"AI\",\"DEEPFAKE\",\"UNCERTAIN\"], "
     "\"confidence\": 0-100 integer, "
@@ -204,6 +213,17 @@ def _normalize(parsed: dict, allow_deepfake: bool = True) -> dict:
         "markers": clean_markers,
         "language": lang_str,
     }
+
+
+def _calibrate_visual(norm: dict) -> dict:
+    """An AI/deepfake verdict needs at least one warn/danger marker; otherwise call it uncertain."""
+    if norm["classification"] in {"AI", "DEEPFAKE"}:
+        strong = [m for m in norm["markers"] if m.severity in {"warn", "danger"}]
+        if not strong:
+            norm["classification"] = "UNCERTAIN"
+            norm["score"] = min(norm["score"], 65)
+            norm["confidence"] = min(norm["confidence"], 60)
+    return norm
 
 
 AI_UNAVAILABLE_MSG = (
@@ -564,7 +584,7 @@ async def analyze_image(req: ImageRequest, request: Request = None):
         parsed = await _llm_image(SYSTEM_IMAGE, "Analyze this image for AI/deepfake markers.", [b64])
     except Exception as e:
         raise _ai_http_error(e)
-    norm = _normalize(parsed, allow_deepfake=True)
+    norm = _calibrate_visual(_normalize(parsed, allow_deepfake=True))
     storage_path = await _store_image(req.session_id, b64)
     scan = ScanResult(
         session_id=req.session_id, type="image",
@@ -596,7 +616,7 @@ async def analyze_video(req: VideoRequest, request: Request = None):
         )
     except Exception as e:
         raise _ai_http_error(e)
-    norm = _normalize(parsed, allow_deepfake=True)
+    norm = _calibrate_visual(_normalize(parsed, allow_deepfake=True))
     storage_path = await _store_video(req.session_id, req.video_base64, req.filename)
     scan = ScanResult(
         session_id=req.session_id, type="video",
